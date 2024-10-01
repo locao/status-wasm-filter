@@ -102,28 +102,33 @@ impl Context for MyFilter {
 }
 
 impl HttpContext for MyFilter {
-//    fn on_http_request_headers(&mut self, nheaders: usize, _eof: bool) -> Action {
-//        Action::Continue
-//    }
+   fn on_http_request_headers(&mut self, nheaders: usize, _eof: bool) -> Action {
+       Action::Continue
+   }
 //
 //    fn on_http_request_body(&mut self, body_size: usize, eof: bool) -> Action {
 //        Action::Continue
 //    }
 //
     fn on_http_response_headers(&mut self, _nheaders: usize, _eof: bool) -> Action {
-        match &self.config.my_greeting {
-            Some(greeting) => {
-                self.set_http_response_header("X-Greeting", Some(greeting.as_str()))
-            },
-            None => ()
+        for (name, value) in &self.get_http_response_headers() {
+            // if name is status then dump it out
+            println!("#ha -> {}: {}", name, value);
         }
-
+        println!("{}", self.get_http_response_header(":status").unwrap()); 
+        let new_body: String = format!("status: {}\n", self.get_http_response_header(":status").unwrap());
+        let body_size = new_body.len();
+        // self.set_http_response_body(0, body_size, &new_body.into_bytes());
+        self.set_http_response_header("content-length", None);
         Action::Continue
     }
 //
-//    fn on_http_response_body(&mut self, body_size: usize, eof: bool) -> Action {
-//        Action::Continue
-//    }
+    fn on_http_response_body(&mut self, body_size: usize, eof: bool) -> Action {
+        println!("Test message");
+        let new_body: String = format!("status: {}\n", self.get_http_response_header(":status").unwrap());
+        self.set_http_response_body(0, body_size, &new_body.into_bytes());
+        Action::Continue
+    }
 //
 //    fn on_log(&mut self) {
 //    }
